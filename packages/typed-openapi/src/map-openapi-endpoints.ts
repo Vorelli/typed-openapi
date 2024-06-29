@@ -85,8 +85,8 @@ export const mapOpenApiEndpoints = (doc: OpenAPIObject) => {
         }
       }
 
-      function hasDefaultParameter(obj: object): obj is { ["default"]: any } {
-        return typeof obj === "object" && (obj as any).default !== undefined;
+      function hasDefaultParameter(obj: object): obj is { schema: { ["default"]: any } } {
+        return typeof obj === "object" && (obj as any).schema.default !== undefined;
       }
 
       // Make parameters optional if all or some of them are not required
@@ -106,7 +106,7 @@ export const mapOpenApiEndpoints = (doc: OpenAPIObject) => {
             } else {
               for (const p of lists[k]) {
                 if (hasDefaultParameter(p)) {
-                  params[k]![p.name]!.value = p.default;
+                  params[k]![p.name]!.value = (params[k]![p.name]!.value as any).default(p.schema.default);
                 } else {
                   if (!p.required) {
                     params[k]![p.name] = t.optional(params[k]![p.name] as any);

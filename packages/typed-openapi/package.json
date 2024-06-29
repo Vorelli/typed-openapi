@@ -1,5 +1,5 @@
 {
-  "name": "typed-openapi",
+  "name": "@vorelli/typed-openapi",
   "type": "module",
   "version": "0.5.1",
   "main": "dist/index.cjs",
