@@ -105,12 +105,8 @@ export const mapOpenApiEndpoints = (doc: OpenAPIObject) => {
               params[k] = t.reference("Partial", [t.object(params[k]!)]) as any;
             } else {
               for (const p of lists[k]) {
-                if (hasDefaultParameter(p)) {
-                  params[k]![p.name]!.value = (params[k]![p.name]!.value as any).default(p.schema.default);
-                } else {
-                  if (!p.required) {
-                    params[k]![p.name] = t.optional(params[k]![p.name] as any);
-                  }
+                if (!p.required && !hasDefaultParameter(p)) {
+                  params[k]![p.name] = t.optional(params[k]![p.name] as any);
                 }
               }
             }
