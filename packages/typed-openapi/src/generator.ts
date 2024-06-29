@@ -7,6 +7,7 @@ import * as Codegen from "@sinclair/typebox-codegen";
 import { match } from "ts-pattern";
 import { type } from "arktype";
 import { wrapWithQuotesIfNeeded } from "./string-utils";
+import { SchemaObject } from "openapi3-ts/oas31";
 
 type GeneratorOptions = ReturnType<typeof mapOpenApiEndpoints> & {
   runtime?: "none" | keyof typeof runtimeValidationGenerator;
@@ -122,7 +123,9 @@ const parameterObjectToString = (parameters: Box<AnyBoxDef> | Record<string, Any
 
   let str = "{";
   for (const [key, box] of Object.entries(parameters)) {
-    str += `${wrapWithQuotesIfNeeded(key)}: ${box.value},\n`;
+    str += `${wrapWithQuotesIfNeeded(key)}: ${box.value}${
+      (box.schema as SchemaObject)?.default ? "= " + (box.schema as any).default : ""
+    },\n`;
   }
   return str + "}";
 };
@@ -294,7 +297,8 @@ export class ApiClient {
       .with("arktype", "io-ts", "typebox", "valibot", () => infer(`TEndpoint`) + `["response"]`)
       .otherwise(() => `TEndpoint["response"]`)}> {
       return this.fetcher("${method}", this.baseUrl + path, params[0])${match(ctx.runtime)
-          .with("zod", () => `as Promise<${infer(`TEndpoint["response"]`)}>`).otherwise(() => ``)};
+            .with("zod", () => `as Promise<${infer(`TEndpoint["response"]`)}>`)
+            .otherwise(() => ``)};
     }
     // </ApiClient.${method}>
     `
