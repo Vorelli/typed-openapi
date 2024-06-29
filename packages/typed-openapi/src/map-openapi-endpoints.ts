@@ -1,4 +1,4 @@
-import type { OpenAPIObject, ResponseObject } from "openapi3-ts/oas31";
+import type { OpenAPIObject, ResponseObject, SchemaObject } from "openapi3-ts/oas31";
 import { OperationObject, ParameterObject } from "openapi3-ts/oas31";
 import { capitalize, pick } from "pastable/server";
 import { Box } from "./box";
@@ -85,23 +85,36 @@ export const mapOpenApiEndpoints = (doc: OpenAPIObject) => {
         }
       }
 
+      function hasDefaultParameter(obj: object): obj is { ["default"]: any } {
+        return typeof obj === "object" && (obj as any).default !== undefined;
+      }
+
       // Make parameters optional if all or some of them are not required
       if (params) {
         const t = createBoxFactory({}, ctx);
-        const filtered_params = ["query", "path", "header"] as Array<keyof Pick<typeof params, "query" | "path" | "header">>;
+        const filtered_params = ["query", "path", "header"] as Array<
+          keyof Pick<typeof params, "query" | "path" | "header">
+        >;
 
         for (const k of filtered_params) {
           if (params[k] && lists[k].length) {
-            if (lists[k].every((param) => !param.required)) {
+            if (
+              lists[k].every((param) => !param.required) &&
+              lists[k].every((param) => !(param.schema as SchemaObject)?.default)
+            ) {
               params[k] = t.reference("Partial", [t.object(params[k]!)]) as any;
             } else {
               for (const p of lists[k]) {
-                if (!p.required) {
-                  params[k]![p.name] = t.optional(params[k]![p.name] as any);
+                if (hasDefaultParameter(p)) {
+                  params[k]![p.name]!.value = p.default;
+                } else {
+                  if (!p.required) {
+                    params[k]![p.name] = t.optional(params[k]![p.name] as any);
+                  }
                 }
               }
             }
-          }  
+          }
         }
 
         // No need to pass empty objects, it's confusing

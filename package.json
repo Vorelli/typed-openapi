@@ -1,5 +1,5 @@
 {
-  "name": "typed-openapi",
+  "name": "@vorelli/typed-openapi",
   "private": true,
   "repository": {
     "type": "git",
